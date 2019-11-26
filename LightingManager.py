@@ -50,10 +50,22 @@ class LightManager(QtWidgets.QDialog):
         func = self.lightTypes[lightType]
 
         light = func()
+        self.addLight(light)
+
+    def addLight(self, light):
         widget = LightWidget(light)
         self.scrollLayout.addWidget(widget)
+        widget.onSolo.connect(self.onSolo)
+
+    def onSolo(self, value):
+        lightWidgets = self.findChildren(LightWidget)
+        for widget in lightWidgets:
+            if widget != self.sender():
+                widget.disableLight(value)
 
 class LightWidget(QtWidgets.QWidget):
+
+    onSolo = QtCore.Signal(bool)
 
     def __init__(self, light):
         super(LightWidget, self).__init__()
@@ -72,6 +84,37 @@ class LightWidget(QtWidgets.QWidget):
         # you only use once because it dosen't have or need a name. "anomas function"
         self.name.toggled.connect(lambda val: self.light.getTransform().visibility.set(val))
         layout.addWidget(self.name, 0, 0)
+
+        soloBtn = QtWidgets.QPushButton('Solo')
+        soloBtn.setCheckable(True)
+        soloBtn.toggled.connect(lambda val: self.onSolo.emit(val))
+        layout.addWidget(soloBtn, 0, 1)
+
+        deleteBtn = QtWidgets.QPushButton('X')
+        deleteBtn.clicked.connect(self.deleteLight)
+        deleteBtn.setMaximumWidth(10)
+        layout.addWidget(deleteBtn, 0, 2)
+
+        intensity = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        intensity.setMinimum(1)
+        intensity.setMinimum(1000)
+        intensity.setValue(self.light.intensity.fet())
+        intensity.valueChanged.connect(lambda val: self.light.intensity.set(val))
+        layout.addWidget(intensity, 1, 0, 1, 2)
+
+    def disableLight(self, value):
+        self.name.setChecked(not value)
+
+    def deleteLight(self):
+        # somtimes these can conflict so best to run all 3 together. 
+        # remove from light manager
+        self.setParent(None)
+        # set visiblity to false
+        self.setVisible(False)
+        # delete later when possible. 
+        self.deleteLater()
+
+        pm.delete(self.light.getTransform())
 
 def showUI():
     ui = LightManager()
