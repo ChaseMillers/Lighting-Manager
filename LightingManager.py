@@ -5,6 +5,7 @@ import pymel.core as pm
 from functools import partial
 import Qt
 import logging 
+from maya import OpenMayaUI as omui
 
 logging.basicConfig()
 logger = logging.getLogger('LightingManager')
@@ -24,7 +25,24 @@ else:
     from shiboken2 import wrapInstance
     from Qt.QtCore import Signal
 
-class LightManager(QtWidgets.QDialog):
+def getMayaMainWindow():
+    win = omui.MQtUtil_mainWindow()
+    ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
+    return ptr
+
+#for docking to side of maya
+def getDock(name='LightingManagerDock'):
+    deleteDock(name)
+    ctrl = pm.workspaceControl(name, dockToMainWindow=('right', 1), label="Lighting Manager")
+    qtCtrl = omui.MQtUtil_findControl(ctrl)
+    ptr = wrapInstance(long(qtCtrl), QtWidgets.QWidget)
+    return ptr 
+
+def deleteDock(name='LightingManagerDock'):
+    if pm.workspaceControl(name, query=True, exists=True):
+        pm.deleteUI(name)
+
+class LightManager(QtWidgets.QWidget):
 
     lightTypes = {
         "Point Light": pm.pointLight,
@@ -36,12 +54,32 @@ class LightManager(QtWidgets.QDialog):
         "Volume Light": partial(pm.shadingNode, 'volumeLight', asLight=True)
     }
 
-    def __init__(self):
-        super(LightManager, self).__init__()
-        self.setWindowTitle('Lighting Manager')
+# change doc to False to turn off docking to window tab
+    def __init__(self, dock=True):
+        if dock:
+            parent = getDock()
+        else:
+            deleteDock()
+            
+            # try to delete, if dosent exist, logg it.
+            try:
+                pm.deleteUI('lightingManager')
+            except:
+                logger.debug('No prevouis UI exists')
 
+            parent = QtWidgets.QDialog(parent=getMayaMainWindow())
+            parent.setObjectName('lightingManager')
+            parent.setWindowTitle('Lighting Manager')
+            layout = QtWidgets.QVBoxLayout(parent)
+
+        super(LightManager, self).__init__(parent=parent)
+       
         self.buildUI()
         self.populate()
+
+        self.parent().layout().addWidget(self)
+        if not dock:
+            parent.show()
 
 # checks to see what lights are already there
     def populate(self):
@@ -179,7 +217,3 @@ class LightWidget(QtWidgets.QWidget):
 
         pm.delete(self.light.getTransform())
 
-def showUI():
-    ui = LightManager()
-    ui.show()
-    return ui
