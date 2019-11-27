@@ -1,3 +1,4 @@
+import os
 from Qt import QtWidgets, QtCore, QtGui
 import pymel.core as pm
 # partial lets you create a object will tekk you witch function
@@ -6,6 +7,8 @@ from functools import partial
 import Qt
 import logging 
 from maya import OpenMayaUI as omui
+import json
+import time
 
 logging.basicConfig()
 logger = logging.getLogger('LightingManager')
@@ -100,11 +103,11 @@ class LightManager(QtWidgets.QWidget):
         for lightType in sorted(self.lightTypes):
             self.lightTypeCB.addItem(lightType)
         # the two digits equal row and column for the widget
-        layout.addWidget(self.lightTypeCB, 0, 0)
+        layout.addWidget(self.lightTypeCB, 0, 0, 1, 2)
 
         createBtn = QtWidgets.QPushButton('Create')
         createBtn.clicked.connect(self.createLight)
-        layout.addWidget(createBtn, 0, 1)
+        layout.addWidget(createBtn, 0, 2)
 
         scrollWidget = QtWidgets.QWidget()
         scrollWidget.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
@@ -114,11 +117,48 @@ class LightManager(QtWidgets.QWidget):
         scrollArea.setWidgetResizable(True)
         scrollArea.setWidget(scrollWidget)
         # add to row 1, at colmn 0, take 1 row, and 2 columns
-        layout.addWidget(scrollArea, 1, 0, 1, 2)
+        layout.addWidget(scrollArea, 1, 0, 1, 3)
+
+        saveBtn = QtWidgets.QPushButton('Save')
+        saveBtn.clicked.connect(self.saveLights)
+        layout.addWidget(saveBtn, 2, 0)
+
+        importBtn = QtWidgets.QPushButton('Import')
+        importBtn.clicked.connect(self.importLights)
+        layout.addWidget(importBtn, 2, 1)
 
         refreshBtn = QtWidgets.QPushButton('Refresh')
         refreshBtn.clicked.connect(self.populate)
-        layout.addWidget(refreshBtn, 2, 1)
+        layout.addWidget(refreshBtn, 2, 2)
+
+    def saveLights(self):
+        properties = {}
+
+        for lightWidget in self.findChildren(LightWidget):
+            light = lightWidget.light
+            transform = light.getTransform()
+
+            properties[str(transform)] = {
+                'translate': list(transform.translate.get()),
+                'rotation': list(transform.rotate.get()),
+                'lightType': pm.objectType(light),
+                'intensity': light.intensity.get(),
+                'color': light.color.get()
+            }
+
+        directory = os.path.join( pm.internalVar(userAppDir=True), 'lightManager' )
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+
+        # give us month and day in date
+        lightFile = os.path.join(directory, 'lightFile_%s.json' % time.strftime('%m%d'))
+        with open(lightFile, 'w') as f:
+            json.dump(properties, f, indent=4)
+
+        logger.info('Saving file to %s' % lightFile)
+
+    def importLights(self):
+        pass
 
     def createLight(self):
         lightType = self.lightTypeCB.currentText()
