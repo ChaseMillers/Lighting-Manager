@@ -3,6 +3,26 @@ import pymel.core as pm
 # partial lets you create a object will tekk you witch function
 #  to call later and what arguments to give it
 from functools import partial
+import Qt
+import logging 
+
+logging.basicConfig()
+logger = logging.getLogger('LightingManager')
+# switch to INFO to DEBUG when testing
+logger.setLevel(logging.INFO)
+
+if Qt.__binding__== 'pySide':
+    logger.debug('Using Pyside with shiboken')
+    from shiboken import wrapInstance
+    from Qt.QtCore import Signal
+elif Qt.__binding__.startswith('PyQt'):
+    logger.debug('Using PyQt with sip')
+    from sip import wrapinstance as wrapInstance
+    from Qt.QtCore import pyqtSignal as Signal
+else: 
+    logger.debug('Using Pyside2 with shiboken')
+    from shiboken2 import wrapInstance
+    from Qt.QtCore import Signal
 
 class LightManager(QtWidgets.QDialog):
 
@@ -82,7 +102,7 @@ class LightManager(QtWidgets.QDialog):
 
 class LightWidget(QtWidgets.QWidget):
 
-    onSolo = QtCore.Signal(bool)
+    onSolo = Signal(bool)
 
     def __init__(self, light):
         super(LightWidget, self).__init__()
@@ -112,7 +132,7 @@ class LightWidget(QtWidgets.QWidget):
         deleteBtn.setMaximumWidth(10)
         layout.addWidget(deleteBtn, 0, 2)
 
-        intensity = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        intensity = QtWidgets.QSlider(Qt.QtCore.Qt.Horizontal)
         intensity.setMinimum(1)
         intensity.setMinimum(1000)
         intensity.setValue(self.light.intensity.get())
