@@ -6,11 +6,12 @@ from Qt import QtWidgets, QtCore, QtGui
 import logging
 
 """
+Lighting Manager By Chase Miller
 
 INSTALLATION:
 
-Place python files in Maya"year" scripts folder.
-To run script, TYPE INTO MAYA PYTHON CONSOLE:
+Place python files "Qt.py" and "LightingManager.py" in the MayaYEAR scripts folder.
+To run script, type into Maya Python console the following:
 
 import lightingManager
 reload(lightingManager)
@@ -91,6 +92,7 @@ class LightWidget(QtWidgets.QWidget):
         delete = QtWidgets.QPushButton('X')
         delete.clicked.connect(self.deleteLight)
         delete.setMaximumWidth(20)
+        delete.setStyleSheet('background-color: rgba(255, 0, 0, 1.0);')
         layout.addWidget(delete, 0, 2)
 
         # slider for intensity of light
@@ -198,8 +200,9 @@ class LightingManager(QtWidgets.QWidget):
         # take 1 row, and two columns worth of space
         layout.addWidget(self.lightTypeCB, 0, 0, 1, 2)
 
-        # button for creating chosen light
+        # create button
         createBtn = QtWidgets.QPushButton('Create')
+        createBtn.setStyleSheet('background-color: rgba(53, 126, 189, 1.0);')
         createBtn.clicked.connect(self.createLight)
         layout.addWidget(createBtn, 0, 2)
 
