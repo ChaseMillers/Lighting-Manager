@@ -9,4 +9,4 @@ Clicking the Solo button, isolates the light by turning off all other lights.
 ![](pics/3.jpg)
 Clicking the Save button, saves the users light setup to an auto generated folder named "LightingManager" in the Maya directory. 
 The import button allows you to load sellected lighting configurations. 
-![](pics/3.jpg)
+![](pics/4.jpg)
